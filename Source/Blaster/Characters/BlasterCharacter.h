@@ -9,9 +9,12 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UWidgetComponent;
+class UCombatComponent;
 class UInputMappingContext;
 class UInputAction;
-class UWidgetComponent;
+
+class AWeapon;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter
@@ -20,13 +23,23 @@ class BLASTER_API ABlasterCharacter : public ACharacter
 
 public:
 	ABlasterCharacter();
+
 	virtual void Tick(float DeltaTime) override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void PostInitializeComponents() override;
 
 protected:
 	virtual void BeginPlay() override;
+
 	void Movement(const FInputActionValue& Value);
+
 	void Look(const FInputActionValue& Value);
+
+	void EquipButtonPressed(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -40,7 +53,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* JumpAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
+	UInputAction* EquipAction;
+
 private:	
+	UFUNCTION()
+	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
+
+	UFUNCTION(Server, Reliable)
+	void ServerEquipButtonPressed();
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	USpringArmComponent* CameraBoom;
 
@@ -49,4 +71,13 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* OverheadWidget;
+
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
+	AWeapon* OverlappingWeapon;
+
+	UPROPERTY(VisibleAnywhere)
+	UCombatComponent* Combat;
+
+public:
+	FORCEINLINE void SetOverlappinWeapon(AWeapon* Weapon);
 };

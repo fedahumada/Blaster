@@ -2,6 +2,9 @@
 
 
 #include "BlasterCharacter.h"
+#include "Blaster/Weapon/Weapon.h"
+#include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,6 +33,34 @@ ABlasterCharacter::ABlasterCharacter()
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(GetRootComponent());
+
+	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
+	Combat->SetIsReplicated(true);
+}
+
+void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+}
+
+void ABlasterCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (Combat) {
+		Combat->Character = this;
+	}
+}
+
+void ABlasterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController())) {
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
+			Subsystem->AddMappingContext(CharacterMappingContext, 0);
+		}
+	}
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -44,17 +75,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Movement);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Jump);
-	}
-}
-
-void ABlasterCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController())) {
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
-			Subsystem->AddMappingContext(CharacterMappingContext, 0);
-		}
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::EquipButtonPressed);
 	}
 }
 
@@ -78,3 +99,47 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 	AddControllerYawInput(LookVector.X);
 	AddControllerPitchInput(LookVector.Y);
 }
+
+void ABlasterCharacter::SetOverlappinWeapon(AWeapon* Weapon)
+{
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+	OverlappingWeapon = Weapon;
+	if (IsLocallyControlled()) {
+		if (OverlappingWeapon) {
+			OverlappingWeapon->ShowPickupWidget(true);
+		}
+	}
+}
+
+void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
+{
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+	if (LastWeapon) {
+		LastWeapon->ShowPickupWidget(false);
+	}
+}
+
+void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
+{
+	if (Combat) {
+		if (HasAuthority()) {
+			Combat->EquipWeapon(OverlappingWeapon);
+		}
+		else {
+			ServerEquipButtonPressed();
+		}
+	}
+}
+
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (Combat) {
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+
