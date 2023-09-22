@@ -39,7 +39,9 @@ protected:
 
 	void Look(const FInputActionValue& Value);
 
-	void EquipButtonPressed(const FInputActionValue& Value);
+	void EquipButtonPressed();
+
+	void CrouchButtonPressed();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -55,6 +57,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* EquipAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
+	UInputAction* CrouchAction;
 
 private:	
 	UFUNCTION()
@@ -76,8 +81,10 @@ private:
 	AWeapon* OverlappingWeapon;
 
 	UPROPERTY(VisibleAnywhere)
-	UCombatComponent* Combat;
+	UCombatComponent* CombatComp;
 
 public:
-	FORCEINLINE void SetOverlappinWeapon(AWeapon* Weapon);
+	void SetOverlappinWeapon(AWeapon* Weapon);
+
+	bool IsWeaponEquipped();
 };

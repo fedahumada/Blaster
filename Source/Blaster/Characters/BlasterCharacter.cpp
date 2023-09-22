@@ -34,8 +34,10 @@ ABlasterCharacter::ABlasterCharacter()
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(GetRootComponent());
 
-	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat"));
-	Combat->SetIsReplicated(true);
+	CombatComp = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	CombatComp->SetIsReplicated(true);
+
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -47,8 +49,8 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void ABlasterCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	if (Combat) {
-		Combat->Character = this;
+	if (CombatComp) {
+		CombatComp->Character = this;
 	}
 }
 
@@ -76,6 +78,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::Jump);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::EquipButtonPressed);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::CrouchButtonPressed);
 	}
 }
 
@@ -123,11 +126,11 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
+void ABlasterCharacter::EquipButtonPressed()
 {
-	if (Combat) {
+	if (CombatComp) {
 		if (HasAuthority()) {
-			Combat->EquipWeapon(OverlappingWeapon);
+			CombatComp->EquipWeapon(OverlappingWeapon);
 		}
 		else {
 			ServerEquipButtonPressed();
@@ -135,11 +138,24 @@ void ABlasterCharacter::EquipButtonPressed(const FInputActionValue& Value)
 	}
 }
 
-void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+void ABlasterCharacter::CrouchButtonPressed()
 {
-	if (Combat) {
-		Combat->EquipWeapon(OverlappingWeapon);
+	if (bIsCrouched) {
+		UnCrouch();
+	}
+	else {
+		Crouch();
 	}
 }
 
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
+{
+	if (CombatComp) {
+		CombatComp->EquipWeapon(OverlappingWeapon);
+	}
+}
 
+bool ABlasterCharacter::IsWeaponEquipped()
+{
+	return (CombatComp && CombatComp->EquippedWeapon);
+}
