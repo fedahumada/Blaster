@@ -65,6 +65,12 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Movement)
 	FTransform LeftHandTransform;
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Movement)
+	FRotator RightHandRotation;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Movement)
+	bool bIsLocallyControlled;
+
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Character)
 	ETurningInPlace TurningInPlace;
 };

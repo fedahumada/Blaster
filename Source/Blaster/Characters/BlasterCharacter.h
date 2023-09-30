@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
+#include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "BlasterCharacter.generated.h"
@@ -14,11 +15,13 @@ class UWidgetComponent;
 class UCombatComponent;
 class UInputMappingContext;
 class UInputAction;
-
+class UAnimMontage;
 class AWeapon;
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : 
+	public ACharacter, 
+	public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -32,6 +35,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void PostInitializeComponents() override;
+
+	void PlayFireMontage(bool bAiming);
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,6 +54,8 @@ protected:
 	void AimButtonPressed(const FInputActionValue& Value);
 
 	void AimOffset(float DeltaTime);
+
+	void FireButtonPressed(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -71,6 +78,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* AimAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
+	UInputAction* FireAction;
+
+	UPROPERTY(EditAnywhere)
+	UAnimMontage* FireRifleMontage;
+
 private:	
 	float AO_Yaw;
 
@@ -81,6 +94,8 @@ private:
 	FRotator StartingAimRotation;
 
 	ETurningInPlace TurningInPlace;
+
+	void HideCameraIfCharacterClose();
 
 	void TurnInPlace(float DeltaTime);
 
@@ -105,8 +120,13 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UCombatComponent* CombatComp;
 
+	UPROPERTY(EditAnywhere)
+	float CameraThreshold = 200.f;
+
 public:
 	void SetOverlappinWeapon(AWeapon* Weapon);
+
+	AWeapon* GetEquippedWeapon();
 
 	bool IsWeaponEquipped();
 
@@ -116,7 +136,9 @@ public:
 
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 
-	AWeapon* GetEquippedWeapon();
-
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
+
+	FVector GetHitTarget() const;
+
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };
