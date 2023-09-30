@@ -17,6 +17,9 @@ enum class EWeaponState : uint8 {
 
 class USphereComponent;
 class UWidgetComponent;
+class UAnimationAsset;
+class ACasing;
+class UTexture2D;
 
 UCLASS()
 class BLASTER_API AWeapon : public AActor
@@ -31,6 +34,27 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void ShowPickupWidget(bool bShowWidget);
+
+	virtual void Fire(const FVector& HitTarget);
+
+	//Textures for the weapon crosshairs
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsCenter;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsLeft;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsRight;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsTop;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsBottom;
+
+	//Zoomed FOV while aiming
+	UPROPERTY(EditAnywhere)
+	float ZoomedFOV = 30.f;
+
+	UPROPERTY(EditAnywhere)
+	float ZoomedInterpSpeed = 20.f;
 
 protected:
 	virtual void BeginPlay() override;
@@ -57,11 +81,21 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UWidgetComponent* PickupWidget;
 
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UAnimationAsset* FireAnimation;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ACasing> CasingClass;
+
 public:
 	void SetWeaponState(EWeaponState State);
 
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+
+	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
+
+	FORCEINLINE float GetZoomedInterpSpeed() const { return ZoomedInterpSpeed; }
 
 };
