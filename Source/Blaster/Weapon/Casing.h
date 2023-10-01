@@ -23,6 +23,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:	
+	float DestroyDelay = 0.35f;
+
+	FTimerHandle DestroyTimer;
+
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* CasingMesh;
 
@@ -31,4 +35,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundCue* BulletShellSound;
+
+	void StartDestroyTimer();
+
+	void DestroyTimerFinished();
+
 };

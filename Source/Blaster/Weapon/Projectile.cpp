@@ -22,7 +22,7 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionBox->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
-	//CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 

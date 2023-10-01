@@ -41,6 +41,8 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastHit();
 
+	virtual void OnRep_ReplicatedMovement() override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -57,6 +59,10 @@ protected:
 	void AimButtonPressed(const FInputActionValue& Value);
 
 	void AimOffset(float DeltaTime);
+
+	void CalculateAO_Pitch();
+
+	void SimProxiesTurn();
 
 	void FireButtonPressed(const FInputActionValue& Value);
 
@@ -99,6 +105,18 @@ private:
 
 	float AO_Pitch;
 
+	bool bRotateRootBone;
+
+	float TurnThreshold = 0.5f;
+
+	FRotator ProxyRotationLastFrame;
+
+	FRotator ProxyRotation;
+
+	float ProxyYaw;
+
+	float TimeSinceLastMovementReplication;
+
 	FRotator StartingAimRotation;
 
 	ETurningInPlace TurningInPlace;
@@ -106,6 +124,8 @@ private:
 	void HideCameraIfCharacterClose();
 
 	void TurnInPlace(float DeltaTime);
+
+	float CalculateSpeed();
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
@@ -149,4 +169,6 @@ public:
 	FVector GetHitTarget() const;
 
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 };

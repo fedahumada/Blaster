@@ -4,6 +4,7 @@
 #include "Casing.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "TimerManager.h"
 
 ACasing::ACasing()
 {
@@ -23,6 +24,7 @@ void ACasing::BeginPlay()
 	Super::BeginPlay();
 	CasingMesh->OnComponentHit.AddDynamic(this, &ACasing::OnHit);
 	CasingMesh->AddImpulse(GetActorForwardVector() * BulletShellEjectionImpulse);
+	StartDestroyTimer();
 }
 
 void ACasing::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -30,6 +32,14 @@ void ACasing::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 	if (BulletShellSound) {
 		UGameplayStatics::PlaySoundAtLocation(this, BulletShellSound, GetActorLocation());
 	}
-	Destroy();
 }
 
+void ACasing::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(DestroyTimer, this, &ACasing::DestroyTimerFinished, DestroyDelay);
+}
+
+void ACasing::DestroyTimerFinished()
+{
+	Destroy();
+}

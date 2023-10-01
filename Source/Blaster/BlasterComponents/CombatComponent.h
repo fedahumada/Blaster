@@ -12,7 +12,7 @@ class ABlasterCharacter;
 class ABlasterPlayerController;
 class ABlasterHUD;
 
-#define TRACE_LENGTH 8000000.f;
+#define TRACE_LENGTH 80000.f;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
