@@ -231,6 +231,23 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 	}
 }
 
+void ABlasterCharacter::PlayHitReactMontage()
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireRifleMontage) {
+		AnimInstance->Montage_Play(FireRifleMontage);
+		FName SectionName("FromFront");
+		//SectionName = bAiming ? FName("RifleHip") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
+}
+
 void ABlasterCharacter::HideCameraIfCharacterClose()
 {
 	if (!IsLocallyControlled()) return;

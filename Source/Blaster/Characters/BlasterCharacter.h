@@ -38,6 +38,9 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,6 +59,8 @@ protected:
 	void AimOffset(float DeltaTime);
 
 	void FireButtonPressed(const FInputActionValue& Value);
+
+	void PlayHitReactMontage();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -81,8 +86,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* FireAction;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireRifleMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* HitReactMontage;
 
 private:	
 	float AO_Yaw;
