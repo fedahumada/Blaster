@@ -17,6 +17,7 @@ class UInputMappingContext;
 class UInputAction;
 class UAnimMontage;
 class AWeapon;
+class ABlasterPlayerController;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : 
@@ -37,9 +38,6 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	void PlayFireMontage(bool bAiming);
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -67,6 +65,11 @@ protected:
 	void FireButtonPressed(const FInputActionValue& Value);
 
 	void PlayHitReactMontage();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController,AActor* DamageCauser);
+
+	void UpdateHUDHealth();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -150,6 +153,18 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
+
+	//Player health
+	ABlasterPlayerController* BlasterPlayerController;
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
 
 public:
 	void SetOverlappinWeapon(AWeapon* Weapon);

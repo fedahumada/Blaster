@@ -5,6 +5,7 @@
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "BlasterAnimInstance.h"
 #include "Net/UnrealNetwork.h"
 #include "Camera/CameraComponent.h"
@@ -55,6 +56,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, Health);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -73,6 +75,12 @@ void ABlasterCharacter::BeginPlay()
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
 			Subsystem->AddMappingContext(CharacterMappingContext, 0);
 		}
+	}
+
+	UpdateHUDHealth();
+
+	if (HasAuthority()) {
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
 }
 
@@ -203,11 +211,6 @@ void ABlasterCharacter::FireButtonPressed(const FInputActionValue& Value)
 	CombatComp->SetFiring(Value.Get<bool>());
 }
 
-void ABlasterCharacter::MulticastHit_Implementation()
-{
-	PlayHitReactMontage();
-}
-
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
@@ -325,36 +328,29 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 	}
 }
 
+//Health
+
+void ABlasterCharacter::OnRep_Health()
+{
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
 //
 
-bool ABlasterCharacter::IsWeaponEquipped()
+void ABlasterCharacter::UpdateHUDHealth()
 {
-	return (CombatComp && CombatComp->EquippedWeapon);
-}
-
-bool ABlasterCharacter::IsAiming()
-{
-	return (CombatComp && CombatComp->bIsAiming);
-}
-
-float ABlasterCharacter::CalculateSpeed()
-{
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.f;
-	return Velocity.Size();
-
-}
-
-FVector ABlasterCharacter::GetHitTarget() const
-{
-	if (CombatComp == nullptr) return FVector();
-	return CombatComp->HitTarget;
-}
-
-AWeapon* ABlasterCharacter::GetEquippedWeapon()
-{
-	if (CombatComp == nullptr) return nullptr;
-	return CombatComp->EquippedWeapon;
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+	if (BlasterPlayerController) {
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
 }
 
 void ABlasterCharacter::HideCameraIfCharacterClose()
@@ -372,4 +368,33 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 			CombatComp->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+bool ABlasterCharacter::IsWeaponEquipped()
+{
+	return (CombatComp && CombatComp->EquippedWeapon);
+}
+
+bool ABlasterCharacter::IsAiming()
+{
+	return (CombatComp && CombatComp->bIsAiming);
+}
+
+float ABlasterCharacter::CalculateSpeed()
+{
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	return Velocity.Size();
+}
+
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	if (CombatComp == nullptr) return FVector();
+	return CombatComp->HitTarget;
+}
+
+AWeapon* ABlasterCharacter::GetEquippedWeapon()
+{
+	if (CombatComp == nullptr) return nullptr;
+	return CombatComp->EquippedWeapon;
 }
