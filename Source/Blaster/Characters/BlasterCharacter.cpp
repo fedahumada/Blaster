@@ -6,6 +6,7 @@
 #include "Blaster/Weapon/Weapon.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/GameModes/BlasterGameMode.h"
 #include "BlasterAnimInstance.h"
 #include "Net/UnrealNetwork.h"
 #include "Camera/CameraComponent.h"
@@ -136,6 +137,29 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookVector.Y);
 }
 
+void ABlasterCharacter::Jump()
+{
+	if (bIsCrouched) {
+		UnCrouch();
+		Super::Jump();
+	}
+	else {
+		Super::Jump();
+	}
+}
+
+void ABlasterCharacter::CrouchButtonPressed()
+{
+	if (bIsCrouched) {
+		UnCrouch();
+	}
+	else {
+		Crouch();
+	}
+}
+
+//Equipping weapon
+
 void ABlasterCharacter::SetOverlappinWeapon(AWeapon* Weapon)
 {
 	if (OverlappingWeapon) {
@@ -178,42 +202,12 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 	}
 }
 
-void ABlasterCharacter::Jump()
-{
-	if (bIsCrouched) {
-		UnCrouch();
-		Super::Jump();
-	}
-	else {
-		Super::Jump();
-	}
-}
-
-void ABlasterCharacter::CrouchButtonPressed()
-{
-	if (bIsCrouched) {
-		UnCrouch();
-	}
-	else {
-		Crouch();
-	}
-}
-
-void ABlasterCharacter::AimButtonPressed(const FInputActionValue& Value)
-{
-	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
-	CombatComp->SetAiming(Value.Get<bool>());
-}
-
-void ABlasterCharacter::FireButtonPressed(const FInputActionValue& Value)
-{
-	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
-	CombatComp->SetFiring(Value.Get<bool>());
-}
+//Animation montages
 
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
 {
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireRifleMontage) {
 		AnimInstance->Montage_Play(FireRifleMontage);
@@ -226,6 +220,7 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 void ABlasterCharacter::PlayHitReactMontage()
 {
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireRifleMontage) {
 		AnimInstance->Montage_Play(FireRifleMontage);
@@ -233,6 +228,28 @@ void ABlasterCharacter::PlayHitReactMontage()
 		//SectionName = bAiming ? FName("RifleHip") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void ABlasterCharacter::PlayEliminationMontage()
+{	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EliminationMontage) {
+		AnimInstance->Montage_Play(EliminationMontage);
+	}
+}
+
+//Aiming Firing and turning 
+
+void ABlasterCharacter::AimButtonPressed(const FInputActionValue& Value)
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	CombatComp->SetAiming(Value.Get<bool>());
+}
+
+void ABlasterCharacter::FireButtonPressed(const FInputActionValue& Value)
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	CombatComp->SetFiring(Value.Get<bool>());
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
@@ -341,9 +358,22 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();
+
+	if (Health == 0.f) {
+		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		if (BlasterGameMode) {
+			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
 }
 
-//
+void ABlasterCharacter::Eliminated_Implementation()
+{
+	bEliminated = true;
+	PlayEliminationMontage();
+}
 
 void ABlasterCharacter::UpdateHUDHealth()
 {
@@ -352,6 +382,8 @@ void ABlasterCharacter::UpdateHUDHealth()
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
 	}
 }
+
+//Misc
 
 void ABlasterCharacter::HideCameraIfCharacterClose()
 {
@@ -369,6 +401,8 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 		}
 	}
 }
+
+//Getters & Setters
 
 bool ABlasterCharacter::IsWeaponEquipped()
 {

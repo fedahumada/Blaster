@@ -39,7 +39,12 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 
+	void PlayEliminationMontage();
+
 	virtual void OnRep_ReplicatedMovement() override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Eliminated();
 
 protected:
 	virtual void BeginPlay() override;
@@ -65,11 +70,11 @@ protected:
 	void FireButtonPressed(const FInputActionValue& Value);
 
 	void PlayHitReactMontage();
+	
+	void UpdateHUDHealth();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController,AActor* DamageCauser);
-
-	void UpdateHUDHealth();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -101,6 +106,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* EliminationMontage;
+
 private:	
 	float AO_Yaw;
 
@@ -112,13 +120,13 @@ private:
 
 	float TurnThreshold = 0.5f;
 
-	FRotator ProxyRotationLastFrame;
-
-	FRotator ProxyRotation;
-
 	float ProxyYaw;
 
 	float TimeSinceLastMovementReplication;
+
+	FRotator ProxyRotationLastFrame;
+
+	FRotator ProxyRotation;
 
 	FRotator StartingAimRotation;
 
@@ -157,6 +165,8 @@ private:
 	//Player health
 	ABlasterPlayerController* BlasterPlayerController;
 
+	bool bEliminated = false;
+
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
 
@@ -170,18 +180,20 @@ public:
 	void SetOverlappinWeapon(AWeapon* Weapon);
 
 	AWeapon* GetEquippedWeapon();
+	
+	FVector GetHitTarget() const;
 
 	bool IsWeaponEquipped();
 
 	bool IsAiming();
+
+	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
-
-	FVector GetHitTarget() const;
 
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
