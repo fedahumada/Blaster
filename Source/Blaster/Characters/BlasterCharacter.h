@@ -37,14 +37,16 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual void OnRep_ReplicatedMovement() override;
+	
 	void PlayFireMontage(bool bAiming);
 
 	void PlayEliminationMontage();
 
-	virtual void OnRep_ReplicatedMovement() override;
+	void Elimination();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Eliminated();
+	void MulticastEliminated();
 
 protected:
 	virtual void BeginPlay() override;
@@ -76,6 +78,10 @@ protected:
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController,AActor* DamageCauser);
 
+	//
+	//Input Actions & Context
+	//
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
 
@@ -100,6 +106,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* FireAction;
 
+	//
+	//Animation montages
+	//
+	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireRifleMontage;
 
@@ -131,12 +141,12 @@ private:
 	FRotator StartingAimRotation;
 
 	ETurningInPlace TurningInPlace;
+	
+	float CalculateSpeed();
 
 	void HideCameraIfCharacterClose();
 
 	void TurnInPlace(float DeltaTime);
-
-	float CalculateSpeed();
 
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
@@ -162,10 +172,19 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
-	//Player health
+	//
+	// Player health - Elimination & Respawn
+	//
 	ABlasterPlayerController* BlasterPlayerController;
 
 	bool bEliminated = false;
+
+	FTimerHandle ElimTimer;
+
+	void ElimTimerFinished();
+	
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;

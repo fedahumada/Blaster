@@ -18,6 +18,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -30,6 +31,7 @@ ABlasterCharacter::ABlasterCharacter()
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -369,10 +371,25 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	}
 }
 
-void ABlasterCharacter::Eliminated_Implementation()
+void ABlasterCharacter::MulticastEliminated_Implementation()
 {
 	bEliminated = true;
 	PlayEliminationMontage();
+}
+
+void ABlasterCharacter::ElimTimerFinished()
+{
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (BlasterGameMode) {
+		BlasterGameMode->RequestRespond(this, Controller);
+	}
+}
+
+void ABlasterCharacter::Elimination()
+{
+	MulticastEliminated();
+	GetWorldTimerManager().SetTimer(ElimTimer, this, &ABlasterCharacter::ElimTimerFinished, ElimDelay);
+
 }
 
 void ABlasterCharacter::UpdateHUDHealth()
