@@ -56,6 +56,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ZoomedInterpSpeed = 20.f;
 
+	//Drop weapon
+	void Dropped();
+
 protected:
 	virtual void BeginPlay() override;
 	
