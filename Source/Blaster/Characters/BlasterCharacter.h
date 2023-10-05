@@ -7,6 +7,7 @@
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 class USpringArmComponent;
@@ -18,6 +19,7 @@ class UInputAction;
 class UAnimMontage;
 class AWeapon;
 class ABlasterPlayerController;
+class USoundCue;
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : 
@@ -47,6 +49,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminated();
+
+	virtual void Destroyed() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -195,6 +199,42 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	//
+	//Dissolve Effect
+	//
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	void StartDissolve();
+
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(VisibleAnywhere, Category = Elimination)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere, Category = Elimination)
+	UMaterialInstance* DissolveMaterialInstance;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+
+	//
+	//Elimination Bot
+	//
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* ElimBotSound;
+
 public:
 	void SetOverlappinWeapon(AWeapon* Weapon);
 
@@ -217,4 +257,8 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+
+	FORCEINLINE float GetHealth() const { return Health; }
+
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };
