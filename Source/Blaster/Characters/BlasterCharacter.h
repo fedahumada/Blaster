@@ -19,6 +19,7 @@ class UInputAction;
 class UAnimMontage;
 class AWeapon;
 class ABlasterPlayerController;
+class ABlasterPlayerState;
 class USoundCue;
 
 UCLASS()
@@ -76,12 +77,18 @@ protected:
 	void FireButtonPressed(const FInputActionValue& Value);
 
 	void PlayHitReactMontage();
-	
-	void UpdateHUDHealth();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController,AActor* DamageCauser);
 
+	void UpdateHUDHealth();
+
+	//
+	//Initialize HUD
+	//
+
+	void PollInit();
+	
 	//
 	//Input Actions & Context
 	//
@@ -179,6 +186,7 @@ private:
 	//
 	// Player health - Elimination & Respawn
 	//
+	UPROPERTY()
 	ABlasterPlayerController* BlasterPlayerController;
 
 	bool bEliminated = false;
@@ -234,6 +242,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundCue* ElimBotSound;
+
+	UPROPERTY()
+	ABlasterPlayerState* BlasterPlayerState;
 
 public:
 	void SetOverlappinWeapon(AWeapon* Weapon);

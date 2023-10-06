@@ -34,6 +34,7 @@ protected:
 	float Damage = 20.f;
 
 private:
+	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
 
 	UPROPERTY(EditAnywhere)
