@@ -65,6 +65,8 @@ protected:
 	void ServerReload();
 
 	void HandleReload();
+
+	int32 AmountToReload();
 		
 private:
 	UPROPERTY(EditAnywhere)
@@ -152,4 +154,6 @@ private:
 	int32 CarriedAmmo; 
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	void UpdateAmmoValues();
 };
