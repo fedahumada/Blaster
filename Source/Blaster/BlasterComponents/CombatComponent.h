@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/Weapon/WeaponTypes.h"
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "CombatComponent.generated.h"
 
 class AWeapon;
@@ -28,18 +30,27 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	
 	void EquipWeapon(AWeapon* WeaponToEquip);
+
+	void Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
 
 protected:
 	virtual void BeginPlay() override;
+
+	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+
+	void SetHUDCrosshairs(float DeltaTime);
 
 	void SetAiming(bool bAiming);
 
 	void SetFiring(bool bFiring);
 
-	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
-
-	void SetHUDCrosshairs(float DeltaTime);
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bAiming);
@@ -50,10 +61,18 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
-	UFUNCTION()
-	void OnRep_EquippedWeapon();
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+
+	void HandleReload();
 		
 private:
+	UPROPERTY(EditAnywhere)
+	float BaseWalkSpeed;
+
+	UPROPERTY(EditAnywhere)
+	float AimWalkSpeed;
+
 	UPROPERTY()
 	ABlasterCharacter* Character;
 
@@ -66,19 +85,19 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
-	UPROPERTY(Replicated)
-	bool bIsAiming;
+	//
+	//Combat State
+	//
 
-	UPROPERTY(EditAnywhere)
-	bool bIsFiring;
+	UFUNCTION()
+	void OnRep_CombatState();
 
-	UPROPERTY(EditAnywhere)
-	float BaseWalkSpeed;
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unnocupied;
 
-	UPROPERTY(EditAnywhere)
-	float AimWalkSpeed;
-
+	//
 	//HUD and Crosshairs
+	//
 	FHUDPackage HUDPackage;
 
 	float CrosshairsVelocityFactor;
@@ -92,10 +111,14 @@ private:
 	FVector HitTarget;
 
 	//Aiming and FOV
-	//// FOV when not aiming, base camera FOV
+	//	 FOV when not aiming, base camera FOV
+	//
 	float DefaultFOV;
 
 	float CurrentFOV;
+
+	UPROPERTY(Replicated)
+	bool bIsAiming;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float ZoomedFOV = 30.f;
@@ -104,4 +127,29 @@ private:
 	float ZoomedInterpSpeed = 20.f;
 
 	void InterpFOV(float DeltaTime);
+
+	//
+	//Firing
+	//
+
+	bool CanFire();
+
+	UPROPERTY(EditAnywhere)
+	bool bIsFiring;
+
+	//
+	//Ammo
+	//
+	void InitializeCarriedAmmo();
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 30;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo; 
+
+	TMap<EWeaponType, int32> CarriedAmmoMap;
 };

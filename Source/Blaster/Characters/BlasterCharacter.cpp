@@ -4,6 +4,7 @@
 #include "BlasterCharacter.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/Weapon.h"
+#include "Blaster/Weapon/WeaponTypes.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
@@ -122,6 +123,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::CrouchButtonPressed);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::AimButtonPressed);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::FireButtonPressed);
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::ReloadButtonPressed);
 	}
 }
 
@@ -165,6 +167,12 @@ void ABlasterCharacter::CrouchButtonPressed()
 	else {
 		Crouch();
 	}
+}
+
+void ABlasterCharacter::ReloadButtonPressed()
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	CombatComp->Reload();
 }
 
 //Equipping weapon
@@ -222,6 +230,24 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming)
 		AnimInstance->Montage_Play(FireRifleMontage);
 		FName SectionName;
 		SectionName = bAiming ? FName("RifleHip") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayReloadMontage()
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage) {
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		
+		switch (CombatComp->EquippedWeapon->GetWeaponType()) {
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -401,8 +427,14 @@ void ABlasterCharacter::UpdateHUDHealth()
 
 void ABlasterCharacter::MulticastEliminated_Implementation()
 {
+	
 	bEliminated = true;
 	PlayEliminationMontage();
+
+	//Reset weapon ammo
+	if (BlasterPlayerController) {
+		BlasterPlayerController->SetHUDWeaponAmmo(0);
+	}
 
 	//Start dissolve effect
 	if (DissolveMaterialInstance) {
@@ -526,4 +558,10 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon()
 {
 	if (CombatComp == nullptr) return nullptr;
 	return CombatComp->EquippedWeapon;
+}
+
+ECombatState ABlasterCharacter::GetCombatstate() const
+{
+	if (CombatComp == nullptr) return  ECombatState::ECS_MAX;
+	return CombatComp->CombatState;
 }
