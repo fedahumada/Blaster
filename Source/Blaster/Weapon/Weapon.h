@@ -23,6 +23,7 @@ class ACasing;
 class UTexture2D;
 class ABlasterCharacter;
 class ABlasterPlayerController;
+class USoundCue;
 
 UCLASS()
 class BLASTER_API AWeapon : public AActor
@@ -37,12 +38,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void OnRep_Owner() override;
-
-	void SetHUDAmmo();
-
-	void ShowPickupWidget(bool bShowWidget);
-
-	virtual void Fire(const FVector& HitTarget);
 
 	//Textures for the weapon crosshairs
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
@@ -64,6 +59,17 @@ public:
 	float ZoomedInterpSpeed = 20.f;
 
 	//Drop weapon
+	void ShowPickupWidget(bool bShowWidget);
+
+	UPROPERTY(EditAnywhere)
+	USoundCue* EquipSound;
+	
+	virtual void Fire(const FVector& HitTarget);
+
+	void AddAmmo(int32 AmmoToAdd);
+	
+	void SetHUDAmmo();
+	
 	void Dropped();
 
 protected:
