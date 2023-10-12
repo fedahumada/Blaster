@@ -67,6 +67,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
+	DOREPLIFETIME(ABlasterCharacter, bDisableGameplay);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -97,16 +98,7 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled()) {
-		AimOffset(DeltaTime);
-	}
-	else {
-		TimeSinceLastMovementReplication += DeltaTime;
-		if (TimeSinceLastMovementReplication > 0.25f) {
-			OnRep_ReplicateMovement();
-		}
-		CalculateAO_Pitch();
-	}
+	RotateInPlace(DeltaTime);
 	HideCameraIfCharacterClose();
 	PollInit();
 }
@@ -129,7 +121,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ABlasterCharacter::Movement(const FInputActionValue& Value)
 {
-	if (!GetController()) return;
+	if (bDisableGameplay || !GetController()) return;
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 	const FRotator Rotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
@@ -150,6 +142,7 @@ void ABlasterCharacter::Look(const FInputActionValue& Value)
 
 void ABlasterCharacter::Jump()
 {
+	if (bDisableGameplay) return;
 	if (bIsCrouched) {
 		UnCrouch();
 		Super::Jump();
@@ -161,6 +154,7 @@ void ABlasterCharacter::Jump()
 
 void ABlasterCharacter::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (bIsCrouched) {
 		UnCrouch();
 	}
@@ -171,6 +165,7 @@ void ABlasterCharacter::CrouchButtonPressed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
 	CombatComp->Reload();
 }
@@ -202,6 +197,7 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 
 void ABlasterCharacter::EquipButtonPressed()
 {
+	if (bDisableGameplay) return;
 	if (CombatComp) {
 		if (HasAuthority()) {
 			CombatComp->EquipWeapon(OverlappingWeapon);
@@ -277,12 +273,14 @@ void ABlasterCharacter::PlayEliminationMontage()
 
 void ABlasterCharacter::AimButtonPressed(const FInputActionValue& Value)
 {
+	if (bDisableGameplay) return;
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
 	CombatComp->SetAiming(Value.Get<bool>());
 }
 
 void ABlasterCharacter::FireButtonPressed(const FInputActionValue& Value)
 {
+	if (bDisableGameplay) return;
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
 	CombatComp->SetFiring(Value.Get<bool>());
 }
@@ -360,6 +358,25 @@ void ABlasterCharacter::SimProxiesTurn()
 		return;
 	}
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+}
+
+void ABlasterCharacter::RotateInPlace(float DeltaTime)
+{
+	if (bDisableGameplay) {
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled()) {
+		AimOffset(DeltaTime);
+	}
+	else {
+		TimeSinceLastMovementReplication += DeltaTime;
+		if (TimeSinceLastMovementReplication > 0.25f) {
+			OnRep_ReplicateMovement();
+		}
+		CalculateAO_Pitch();
+	}
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
@@ -448,8 +465,9 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 	//Disable character movement , action and collision
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	if (BlasterPlayerController) {
-		DisableInput(BlasterPlayerController);
+	bDisableGameplay = true;
+	if (CombatComp) {
+		FireButtonPressed(false);
 	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -487,6 +505,13 @@ void ABlasterCharacter::Destroyed()
 	Super::Destroyed();
 	if (ElimBotComponent) {
 		ElimBotComponent->DestroyComponent();
+	}
+
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNoInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
+
+	if (CombatComp && CombatComp->EquippedWeapon && bMatchNoInProgress) {
+		CombatComp->EquippedWeapon->Destroy();
 	}
 }
 

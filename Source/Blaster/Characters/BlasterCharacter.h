@@ -42,7 +42,10 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	virtual void OnRep_ReplicatedMovement() override;
-	
+
+
+	//Input
+	void FireButtonPressed(const FInputActionValue& Value);
 
 	//Montages
 	void PlayFireMontage(bool bAiming);
@@ -61,8 +64,14 @@ public:
 
 	virtual void Destroyed() override;
 
+	//Disable Gameplay 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:
 	virtual void BeginPlay() override;
+
+	void AddMappingContextToCharacter();
 
 
 	//Initialize HUD
@@ -83,8 +92,6 @@ protected:
 	void Look(const FInputActionValue& Value);
 	
 	void AimButtonPressed(const FInputActionValue& Value);
-
-	void FireButtonPressed(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputMappingContext* CharacterMappingContext;
@@ -135,6 +142,8 @@ protected:
 
 	void SimProxiesTurn();
 
+	void RotateInPlace(float DeltaTime);
+
 
 	//Health
 	UFUNCTION()
@@ -161,6 +170,12 @@ private:
 
 
 	//AimOffset & movement
+	float CalculateSpeed();
+
+	void HideCameraIfCharacterClose();
+
+	void TurnInPlace(float DeltaTime);
+
 	float AO_Yaw;
 
 	float InterpAO_Yaw;
@@ -182,12 +197,6 @@ private:
 	FRotator StartingAimRotation;
 
 	ETurningInPlace TurningInPlace;
-	
-	float CalculateSpeed();
-
-	void HideCameraIfCharacterClose();
-
-	void TurnInPlace(float DeltaTime);
 
 
 	//Equip weapon
@@ -202,6 +211,9 @@ private:
 
 
 	// Player health - Elimination & Respawn
+	UFUNCTION()
+	void OnRep_Health();
+
 	bool bEliminated = false;
 
 	FTimerHandle ElimTimer;
@@ -221,10 +233,6 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
 	float Health = 100.f;
-
-	UFUNCTION()
-	void OnRep_Health();
-
 
 	//Dissolve Effect
 	UFUNCTION()
@@ -268,6 +276,8 @@ public:
 
 	bool IsAiming();
 
+	ECombatState GetCombatstate() const;
+	
 	FORCEINLINE bool IsEliminated() const { return bEliminated; }
 
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
@@ -284,5 +294,7 @@ public:
 
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 
-	ECombatState GetCombatstate() const;
+	FORCEINLINE UCombatComponent* GetCombatComp() const { return CombatComp; }
+
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 };

@@ -9,6 +9,7 @@
 class UTexture2D;
 class UCharacterOverlay;
 class UUserWidget;
+class UAnnouncement;
 
 USTRUCT(BlueprintType)
 struct FHUDPackage {
@@ -35,16 +36,28 @@ class BLASTER_API ABlasterHUD : public AHUD
 public:
 	virtual void DrawHUD() override;
 
+
+	//Main HUD overlay
+	void AddCharacterOverlay();
+	
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
 	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
 
+
+	//Announcement overlay
+	void AddAnnouncement();
+
+	UPROPERTY(EditAnywhere, Category = "Announcements")
+	TSubclassOf<UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	UAnnouncement* Announcement;
+
 protected:
 	virtual void BeginPlay() override;
-
-	void AddCharacterOverlay();
 
 private:
 	FHUDPackage HUDPackage;
