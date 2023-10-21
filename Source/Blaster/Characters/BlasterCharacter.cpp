@@ -243,6 +243,21 @@ void ABlasterCharacter::PlayReloadMontage()
 		case EWeaponType::EWT_AssaultRifle:
 			SectionName = FName("Rifle");
 			break;
+		case EWeaponType::EWT_RocketLauncher:
+			SectionName = FName("Rifle");//Set rocket seccion on Amontage
+			break;
+		case EWeaponType::EWT_Pistol:
+			SectionName = FName("Rifle");//Set seccion on Amontage
+			break;
+		case EWeaponType::EWT_SubMachineGun:
+			SectionName = FName("Rifle");//Set seccion on Amontage
+			break;
+		case EWeaponType::EWT_Shotgun:
+			SectionName = FName("Rifle");//Set seccion on Amontage
+			break;
+		case EWeaponType::EWT_SniperRifle:
+			SectionName = FName("Rifle");//Set seccion on Amontage
+			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
@@ -275,7 +290,9 @@ void ABlasterCharacter::AimButtonPressed(const FInputActionValue& Value)
 {
 	if (bDisableGameplay) return;
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+	
 	CombatComp->SetAiming(Value.Get<bool>());
+
 }
 
 void ABlasterCharacter::FireButtonPressed(const FInputActionValue& Value)
@@ -479,6 +496,12 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 	}
 	if (ElimBotSound) {
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), ElimBotSound, GetActorLocation());
+	}
+
+	// Disable character sniper aiming 
+	bool bHideSniperScope = IsLocallyControlled() && CombatComp && CombatComp->bIsAiming && CombatComp->EquippedWeapon && CombatComp->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle;
+	if (bHideSniperScope) {
+		ShowSniperScopeWidget(false);
 	}
 }
 

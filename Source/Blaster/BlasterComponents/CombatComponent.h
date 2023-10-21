@@ -14,8 +14,6 @@ class ABlasterCharacter;
 class ABlasterPlayerController;
 class ABlasterHUD;
 
-#define TRACE_LENGTH 80000.f;
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
 {
@@ -48,6 +46,8 @@ protected:
 	void SetAiming(bool bAiming);
 
 	void SetFiring(bool bFiring);
+
+	void Fire();
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
@@ -87,15 +87,16 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
+
 	//
 	//Combat State
 	//
-
 	UFUNCTION()
 	void OnRep_CombatState();
 
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unnocupied;
+
 
 	//
 	//HUD and Crosshairs
@@ -111,6 +112,7 @@ private:
 	float CrosshairsShootingFactor;
 
 	FVector HitTarget;
+
 
 	//Aiming and FOV
 	//	 FOV when not aiming, base camera FOV
@@ -130,14 +132,24 @@ private:
 
 	void InterpFOV(float DeltaTime);
 
+
 	//
 	//Firing
 	//
 
 	bool CanFire();
 
+	bool bCanFire = true;
+
 	UPROPERTY(EditAnywhere)
 	bool bIsFiring;
+
+	//Automatic fire
+	FTimerHandle FireTimer;
+	
+	void StartFireTimer();
+
+	void FireTimerFinished();
 
 	//
 	//Ammo
@@ -146,14 +158,31 @@ private:
 
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
-
-	UPROPERTY(EditAnywhere)
-	int32 StartingARAmmo = 30;
-
+	
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo; 
 
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
 	void UpdateAmmoValues();
+
+	//Starting Ammo
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 30;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingRocketAmmo = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingPistolAmmo = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSubMachineAmmo = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingShotgunAmmo = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSniperAmmo = 0;
+
 };

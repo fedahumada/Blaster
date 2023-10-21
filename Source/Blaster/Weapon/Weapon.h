@@ -58,6 +58,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	float ZoomedInterpSpeed = 20.f;
 
+
+	//Automatic fire
+	UPROPERTY(EditAnywhere)
+	float FireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere)
+	bool bIsAutomatic = true;
+
+
 	//Drop weapon
 	void ShowPickupWidget(bool bShowWidget);
 
@@ -97,17 +106,15 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	UWidgetComponent* PickupWidget;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere)
 	UAnimationAsset* FireAnimation;
+
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ACasing> CasingClass;
 
-	//
-	//Ammo
-	//
-	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType;
 
 	//
 	//Ammo

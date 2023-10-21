@@ -12,6 +12,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "TimerManager.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -222,8 +223,15 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 void UCombatComponent::SetAiming(bool bAiming)
 {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle && bIsAiming != bAiming) {
+		Character->ShowSniperScopeWidget(bAiming);
+	}
+
 	bIsAiming = bAiming;
 	ServerSetAiming(bAiming);
+
 	if (Character) {
 		Character->GetCharacterMovement()->MaxWalkSpeed = bAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
@@ -244,9 +252,28 @@ bool UCombatComponent::CanFire()
 	if (EquippedWeapon == nullptr) return false;
 
 	if (EquippedWeapon->IsEmpty()) {
+		bIsFiring = false;
 		Reload();
 	}
 	return !EquippedWeapon->IsEmpty() && CombatState == ECombatState::ECS_Unnocupied;;
+}
+
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	Character->GetWorldTimerManager().SetTimer(FireTimer, this, &UCombatComponent::FireTimerFinished, EquippedWeapon->FireDelay);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (EquippedWeapon == nullptr) return;
+	bCanFire = true;
+	if (bIsFiring && EquippedWeapon->bIsAutomatic) {
+		Fire();
+	}
+	if (EquippedWeapon->IsEmpty()) {
+		Reload();
+	}
 }
 
 void UCombatComponent::SetFiring(bool bFiring)
@@ -254,14 +281,20 @@ void UCombatComponent::SetFiring(bool bFiring)
 	if (!CanFire()) return;
 
 	bIsFiring = bFiring;
-	if (bFiring) {
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerSetFiring(HitResult.ImpactPoint);
+	if (bIsFiring) {
+		Fire();
+	}
+}
 
+void UCombatComponent::Fire()
+{
+	if (bCanFire) {
+		bCanFire = false;
+		ServerSetFiring(HitTarget);
 		if (EquippedWeapon) {
 			CrosshairsShootingFactor = 0.75f;
 		}
+		StartFireTimer();
 	}
 }
 
@@ -285,6 +318,11 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, StartingPistolAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SubMachineGun, StartingSubMachineAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

@@ -55,6 +55,9 @@ public:
 	void PlayEliminationMontage();
 
 	void PlayHitReactMontage();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
 	
 	//Elimination
 	void Elimination();
