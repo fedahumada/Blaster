@@ -34,7 +34,15 @@ public:
 	void Reload();
 
 	UFUNCTION(BlueprintCallable)
+	void ShotgunShellReload();
+
+	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
+
+	void JumpToShotgunEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
 
 protected:
 	virtual void BeginPlay() override;
@@ -48,6 +56,8 @@ protected:
 	void SetFiring(bool bFiring);
 
 	void Fire();
+
+	void ThrowGrenade();
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
@@ -63,6 +73,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
+
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
 
 	void HandleReload();
 
@@ -166,6 +179,8 @@ private:
 
 	void UpdateAmmoValues();
 
+	void UpdateShotgunAmmoValues();
+
 	//Starting Ammo
 	UPROPERTY(EditAnywhere)
 	int32 StartingARAmmo = 30;
@@ -184,5 +199,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingSniperAmmo = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingGrenadeLauncherAmmo = 0;
 
 };

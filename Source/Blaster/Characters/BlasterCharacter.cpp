@@ -116,6 +116,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::AimButtonPressed);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::FireButtonPressed);
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::ReloadButtonPressed);
+		EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Triggered, this, &ABlasterCharacter::ThrowGrenadeButtonPressed);
 	}
 }
 
@@ -168,6 +169,13 @@ void ABlasterCharacter::ReloadButtonPressed()
 	if (bDisableGameplay) return;
 	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
 	CombatComp->Reload();
+}
+
+void ABlasterCharacter::ThrowGrenadeButtonPressed()
+{
+	if (CombatComp) {
+		CombatComp->ThrowGrenade();
+	}
 }
 
 //Equipping weapon
@@ -244,19 +252,22 @@ void ABlasterCharacter::PlayReloadMontage()
 			SectionName = FName("Rifle");
 			break;
 		case EWeaponType::EWT_RocketLauncher:
-			SectionName = FName("Rifle");//Set rocket seccion on Amontage
+			SectionName = FName("RocketLauncher");
 			break;
 		case EWeaponType::EWT_Pistol:
-			SectionName = FName("Rifle");//Set seccion on Amontage
+			SectionName = FName("Pistol");
 			break;
 		case EWeaponType::EWT_SubMachineGun:
-			SectionName = FName("Rifle");//Set seccion on Amontage
+			SectionName = FName("Pistol");
 			break;
 		case EWeaponType::EWT_Shotgun:
-			SectionName = FName("Rifle");//Set seccion on Amontage
+			SectionName = FName("Shotgun");
 			break;
 		case EWeaponType::EWT_SniperRifle:
-			SectionName = FName("Rifle");//Set seccion on Amontage
+			SectionName = FName("Rifle");
+			break;
+		case EWeaponType::EWT_GrenadeLauncher:
+			SectionName = FName("Rifle");
 			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
@@ -274,6 +285,17 @@ void ABlasterCharacter::PlayHitReactMontage()
 		//SectionName = bAiming ? FName("RifleHip") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	if (CombatComp == nullptr || CombatComp->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ThrowGrenadeMontage) {
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+
 }
 
 void ABlasterCharacter::PlayEliminationMontage()

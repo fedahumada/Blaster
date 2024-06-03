@@ -3,6 +3,7 @@ UENUM(BlueprintType)
 enum class ECombatState : uint8 {
 	ECS_Unnocupied UMETA(Display = "Unnocupied"),
 	ECS_Reloading UMETA(Display = "Reloading"),
+	ECS_ThrowingGrenade UMETA(Display = "Throwing Grenade"),
 
 	ECS_MAX UMETA(Display = "DefaultMAX"),
 };

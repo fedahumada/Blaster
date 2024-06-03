@@ -56,6 +56,8 @@ public:
 
 	void PlayHitReactMontage();
 
+	void PlayThrowGrenadeMontage();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 	
@@ -91,6 +93,8 @@ protected:
 	void EquipButtonPressed();
 	
 	void ReloadButtonPressed();
+
+	void ThrowGrenadeButtonPressed();
 	
 	void Look(const FInputActionValue& Value);
 	
@@ -123,6 +127,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
 	UInputAction* ReloadAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Inputs)
+	UInputAction* ThrowGrenadeAction;
+
 
 	//Animation montages
 	UPROPERTY(EditAnywhere, Category = Combat)
@@ -130,6 +137,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ReloadMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
@@ -300,4 +310,6 @@ public:
 	FORCEINLINE UCombatComponent* GetCombatComp() const { return CombatComp; }
 
 	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
+	
+	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 };

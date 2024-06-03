@@ -81,6 +81,10 @@ public:
 	
 	void Dropped();
 
+
+	//Enable-Disable custom depth
+	void EnableCustomDepth(bool bEnable);
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -140,6 +144,8 @@ public:
 	void SetWeaponState(EWeaponState State);
 
 	bool IsEmpty();
+
+	bool IsFull();
 	
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 
