@@ -33,8 +33,8 @@ void UOverheadWidget::SetDisplayText(FString TextToDisplay)
 	}
 }
 
-void UOverheadWidget::OnLevelRemovedFromWorld(ULevel* Inlevel, UWorld* InWorld)
+void UOverheadWidget::NativeDestruct()
 {
 	RemoveFromParent();
-	Super::OnLevelRemovedFromWorld(Inlevel, InWorld);
+	Super::NativeDestruct();
 }

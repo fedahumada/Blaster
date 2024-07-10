@@ -25,5 +25,5 @@ public:
 	UTextBlock* DisplayText;
 
 protected:
-	virtual void OnLevelRemovedFromWorld(ULevel* Inlevel, UWorld* InWorld) override;
+	virtual void NativeDestruct() override;
 };
